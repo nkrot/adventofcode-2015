@@ -1,0 +1,14 @@
+--- Tests ---
+T1.0: True 1 1
+T1.1: True 1 1
+T1.2: True 0 0
+T1.3: True 0 0
+T1.4: True 0 0
+T2.5: True 1 1
+T2.6: True 1 1
+T2.7: True 0 0
+T2.8: True 0 0
+--- Day 05 p.1 ---
+True 255 255
+--- Day 05 p.2 ---
+True 55 55
