@@ -8,7 +8,6 @@ import re
 import os
 import sys
 from typing import List
-from itertools import product
 from functools import reduce
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
