@@ -146,39 +146,40 @@ class Gate(object):
             ",".join([str(v) for v in self.operands]))
 
 
-CIRCUIT = Dict[str, Gate]
+class Circuit(dict):
 
+    @classmethod
+    def from_lines(cls, lines: List[str]) -> 'Circuit':
+        obj = cls()
+        for line in lines:
+            line = line.strip()
+            if line:
+                gate = Gate.from_line(line)
+                gate.connect_to(obj)
+        return obj
 
-def create_circuit(lines: List[str]) -> CIRCUIT:
-    circuit = {}
-    for line in lines:
-        line = line.strip()
-        if line:
-            gate = Gate.from_line(line)
-            gate.connect_to(circuit)
-    return circuit
+    def __init__(self):
+        super().__init__()
 
+    def execute(self) -> None:
+        for name, gate in self.items():
+            gate.execute()
+            if DEBUG:
+                print(gate.name, gate.signal)
+        pass
 
-def execute_circuit(circuit: CIRCUIT) -> None:
-    for name, gate in circuit.items():
-        gate.execute()
-        if DEBUG:
-            print(gate.name, gate.signal)
-
-
-def reset_circuit(circuit: CIRCUIT) -> None:
-    for name, gate in circuit.items():
-        gate.reset()
+    def reset(self) -> None:
+        for name, gate in self.items():
+            gate.reset()
+        pass
 
 
 def solve_p1(lines: List[str], target: str = None) -> int:
     """Solution to the 1st part of the challenge"""
-    circuit = create_circuit(lines)
+    circuit = Circuit.from_lines(lines)
     if DEBUG:
         print(circuit)
-
-    execute_circuit(circuit)
-
+    circuit.execute()
     if target is not None:
         return circuit[target].signal
     else:
@@ -187,15 +188,12 @@ def solve_p1(lines: List[str], target: str = None) -> int:
 
 def solve_p2(lines: List[str], target) -> int:
     """Solution to the 2nd part of the challenge"""
-    circuit = create_circuit(lines)
-    execute_circuit(circuit)
-
+    circuit = Circuit.from_lines(lines)
+    circuit.execute()
     signal_a = circuit['a'].signal
-    reset_circuit(circuit)
-
+    circuit.reset()
     circuit['b'].signal = signal_a
-    execute_circuit(circuit)
-
+    circuit.execute()
     return circuit[target].signal
 
 
