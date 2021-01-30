@@ -7,7 +7,7 @@
 import re
 import os
 import sys
-from typing import List, Optional, Tuple, Callable
+from typing import List, Tuple, Callable
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from aoc import utils
@@ -37,7 +37,7 @@ def parse(lines: List[str]) -> List[tuple]:
     return commands
 
 
-def update_p1(lights: dict, light: tuple, inst: str):
+def update_p1(lights: dict, light: Tuple[int, int], inst: str):
     if inst == 'on':
         lights[light] = 1
     elif inst == 'off':
@@ -51,7 +51,7 @@ def update_p1(lights: dict, light: tuple, inst: str):
         raise ValueError(inst)
 
 
-def update_p2(lights: dict, light: tuple, inst: str):
+def update_p2(lights: dict, light: Tuple[int, int], inst: str):
     if inst == 'on':
         lights[light] = lights.get(light, 0) + 1
     elif inst == 'off':
