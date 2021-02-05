@@ -16,7 +16,8 @@ from aoc import utils
 
 DEBUG = False
 
-def split(line: str) -> List[str]:
+
+def look_and_say(line: str):
     groups = [['']]
     grp = groups[-1]
     for ch in list(line):
@@ -25,21 +26,15 @@ def split(line: str) -> List[str]:
             groups.append(grp)
         grp.append(ch)
     groups.pop(0)
-    return groups
-
-
-def join(groups: List[List[str]]) -> str:
-    return "".join([f"{len(grp)}{grp[0]}" for grp in groups])
+    res = "".join([f"{len(grp)}{grp[0]}" for grp in groups])
+    return res
 
 
 def solve_p1(line: str, times=1) -> int:
     """Solution to the 1st part of the challenge"""
-    res = line
     for t in range(times):
-        groups = split(line)
-        res = join(groups)
-        line = res
-    return res
+        line = look_and_say(line)
+    return line
 
 
 def solve_p2(lines: List[str]) -> int:
