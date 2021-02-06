@@ -1,0 +1,12 @@
+--- Tests ---
+T3.0: True False False
+T3.1: True False False
+T3.2: True False False
+T3.3: True True True
+T3.4: True True True
+T1.5: True abcdffaa abcdffaa
+T1.6: True ghjaabcc ghjaabcc
+--- Day 11 p.1 ---
+True cqjxxyzz cqjxxyzz
+--- Day 11 p.2 ---
+True cqkaabcc cqkaabcc
