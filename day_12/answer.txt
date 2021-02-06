@@ -1,0 +1,14 @@
+--- Tests ---
+T1.0: True 6 6
+T2.0: True 6 6
+T1.1: True 6 6
+T1.2: True 0 0
+T1.3: True 0 0
+T1.4: True 6 6
+T2.4: True 6 6
+T2.5: True 4 4
+T2.6: True 0 0
+--- Day 12 p.1 ---
+True 156366 156366
+--- Day 12 p.2 ---
+True 96852 96852
