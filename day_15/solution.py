@@ -2,13 +2,14 @@
 
 # # #
 # This solution implement brute force algorithm that can be made better.
-# Especially part 2 should be easy to optimize
+# Especially part 2 should be easy to optimize.
+# Is DP applicable?
 #
 
 import re
 import os
 import sys
-from typing import List, Tuple
+from typing import List
 from functools import reduce
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
