@@ -1,0 +1,7 @@
+--- Tests ---
+T1.0: True 4 4
+T2.0: True 3 3
+--- Day 17 p.1 ---
+True 1304 1304
+--- Day 17 p.2 ---
+True 18 18
