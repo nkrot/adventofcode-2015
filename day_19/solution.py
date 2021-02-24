@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from aoc import utils
 
 
-DEBUG = not False
+DEBUG = False
 
 
 def parse_lines(lines: List[str], rev: bool = False) -> Tuple[Dict, str]:
@@ -170,26 +170,41 @@ def solve_p2(lines: List[str]) -> int:
     assert set(map(len, reactions.values())) == set([1]), \
         "Ambiguous replacements. This solution is not applicable."
 
-    # reverse the strings.
-    # By some reason, it works iff rightmost occurrences are replaced first
-    # TODO: why????
-    reactions = {k[::-1]: vs[0][::-1] for k, vs in reactions.items()}
+    # keep only one value on the right side, which is already the case
+    reactions = {k: vs[0] for k, vs in reactions.items()}
+
+    # Reverse the strings.
+    # By some reason, the solution works iff rightmost occurrences are
+    # replaced first. TODO: why????
+    reactions = {k[::-1]: vs[::-1] for k, vs in reactions.items()}
     molecule = molecule[::-1]
 
-    r = re.compile('({})'.format("|".join(set(reactions.keys()))))
+    def repl(mo):
+        return reactions[mo[0]]
 
+    r = re.compile('({})'.format("|".join(set(reactions.keys()))))
     cnt = 0
-    while set(molecule) != {'e'}:
-        m = re.search(r, molecule)
-        if m:
-            cnt += 1
-            st, ed = m.span()
-            molecule = molecule[:st] + reactions[m[1]] + molecule[ed:]
-        else:
-            # the algorithm did not complete
-            cnt = 0
-            break
+    # while molecule != 'e': # this does not work for some tests, hence:
+    while set(molecule) != set('e'):
+        cnt += 1
+        molecule = re.sub(r, repl, molecule, 1)
+        if DEBUG:
+            print(" -->", molecule)
     return cnt
+
+    # ugly
+    # cnt = 0
+    # while molecule != 'e':
+    #     m = re.search(r, molecule)
+    #     if m:
+    #         cnt += 1
+    #         st, ed = m.span()
+    #         molecule = molecule[:st] + reactions[m[1]] + molecule[ed:]
+    #     else:
+    #         # the algorithm did not complete
+    #         cnt = 0
+    #         break
+    # return cnt
 
 
 text_1 = """\
@@ -217,10 +232,10 @@ text_4 = text_3.split('\n')[:-1] + ['HOHOHO']
 
 
 tests = [
-    # (text_1.split('\n'),
-    #  len(set(["HOOH", "HOHO", "OHOH", "HOOH" "HHHH"])),
-    #  None),
-    # (text_2, 7, None),
+    (text_1.split('\n'),
+     len(set(["HOOH", "HOHO", "OHOH", "HOOH" "HHHH"])),
+     None),
+    (text_2, 7, None),
     (text_3.split('\n'), None, 3),
     (text_4, None, 6)
 ]
