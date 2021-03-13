@@ -81,6 +81,7 @@ def play(pl_1, pl_2) -> Tuple[Player, int]:
             return pl_2, 1
     return None, None
 
+
 weapons = [
     # (Name, Cost  Damage  Armor)
     ("Dagger",      8, 4, 0),
@@ -90,6 +91,7 @@ weapons = [
     ("Greataxe",   74, 8, 0)
 ]
 
+
 armors = [
     # Name, Cost  Damage  Armor
     ("Leather",     13, 0, 1),
@@ -98,6 +100,7 @@ armors = [
     ("Bandedmail",  75, 0, 4),
     ("Platemail",  102, 0, 5),
 ]
+
 
 rings = [
     # Name, Cost  Damage  Armor
@@ -109,8 +112,10 @@ rings = [
     ("Defense +3",  80, 0, 3),
 ]
 
+
 def cost_of_weapons(weapons: List[Tuple]) -> int:
     return sum(w[1] for w in weapons)
+
 
 def combinations_of_weapons():
     '''Generate allowed combinations of weapons, armors and rings
@@ -130,13 +135,14 @@ def combinations_of_weapons():
 
 
 def demo_1():
-    print("-- Demo: A simple game ---" )
+    print("-- Demo: A simple game from the task explanation ---" )
     you = Player(8, 5, 5)
     boss = Boss(12, 7, 2)
     print("Player[0]:", you)
     print("Player[1]:", boss)
     winner, idx = play(you, boss)
     print("Won: {}, {}".format(idx, winner))
+
 
 def demo_2():
     print("--- Demo: An armed Player ---")
@@ -160,7 +166,7 @@ def demo_3():
 #demo_3()
 
 
-def solve_p1(lines: List[str]) -> int:
+def solve_p1() -> int:
     """Solution to the 1st part of the challenge"""
     cost = cost_of_weapons(weapons + armors + rings)
     for armaments in combinations_of_weapons():
@@ -171,10 +177,15 @@ def solve_p1(lines: List[str]) -> int:
     return cost
 
 
-def solve_p2(lines: List[str]) -> int:
+def solve_p2() -> int:
     """Solution to the 2nd part of the challenge"""
-    # TODO
-    return 0
+    cost = 0
+    for armaments in combinations_of_weapons():
+        you = Player.with_armament(armaments)
+        winner, idx = play(you, Boss())
+        if idx == 1:  # boss won
+            cost = max(cost, cost_of_weapons(you.weapons))
+    return cost
 
 
 text_1 = """hello
@@ -183,7 +194,6 @@ melon"""
 
 tests = [
     # (text_1.split('\n'), exp1, exp2),
-    # TODO
 ]
 
 
@@ -192,26 +202,27 @@ def run_tests():
 
     for tid, (inp, exp1, exp2) in enumerate(tests):
         if exp1 is not None:
-            res1 = solve_p1(inp)
+            res1 = solve_p1()
             print(f"T1.{tid}:", res1 == exp1, exp1, res1)
 
         if exp2 is not None:
-            res2 = solve_p2(inp)
+            res2 = solve_p2()
             print(f"T2.{tid}:", res2 == exp2, exp2, res2)
 
 
 def run_real():
     day = '21'
-    lines = utils.load_input()
+    # input directly hardcoded in Boss class
+    #lines = utils.load_input()
 
     print(f"--- Day {day} p.1 ---")
     exp1 = 91
-    res1 = solve_p1(lines)
+    res1 = solve_p1()
     print(exp1 == res1, exp1, res1)
 
     print(f"--- Day {day} p.2 ---")
-    exp2 = -1
-    res2 = solve_p2(lines)
+    exp2 = 158
+    res2 = solve_p2()
     print(exp2 == res2, exp2, res2)
 
 
