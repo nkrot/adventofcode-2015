@@ -1,0 +1,113 @@
+--- Day 22 p.1 ---
+--- New Game ---
+
+-- Wizard turn, round 1 --
+- Wizard has 50 hit points, 0 armor, 500 mana; spent 0 mana
+- Boss has 51 hit points
+Wizard casts Poison.
+
+-- Boss turn, round 1 --
+- Wizard has 50 hit points, 0 armor, 327 mana; spent 173 mana
+- Boss has 51 hit points
+Poison deals 3 damage; its timer is now 5.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 2 --
+- Wizard has 41 hit points, 0 armor, 327 mana; spent 173 mana
+- Boss has 48 hit points
+Poison deals 3 damage; its timer is now 4.
+Wizard casts Recharge.
+
+-- Boss turn, round 2 --
+- Wizard has 41 hit points, 0 armor, 98 mana; spent 402 mana
+- Boss has 45 hit points
+Poison deals 3 damage; its timer is now 3.
+Recharge provides 101 mana; its timer is now 4.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 3 --
+- Wizard has 32 hit points, 0 armor, 199 mana; spent 402 mana
+- Boss has 42 hit points
+Poison deals 3 damage; its timer is now 2.
+Recharge provides 101 mana; its timer is now 3.
+Wizard casts Magic Missile.
+Magic Missile deals 4 damage.
+
+-- Boss turn, round 3 --
+- Wizard has 32 hit points, 0 armor, 247 mana; spent 455 mana
+- Boss has 35 hit points
+Poison deals 3 damage; its timer is now 1.
+Recharge provides 101 mana; its timer is now 2.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 4 --
+- Wizard has 23 hit points, 0 armor, 348 mana; spent 455 mana
+- Boss has 32 hit points
+Poison deals 3 damage; its timer is now 0.
+Recharge provides 101 mana; its timer is now 1.
+Wizard casts Poison.
+
+-- Boss turn, round 4 --
+- Wizard has 23 hit points, 0 armor, 276 mana; spent 628 mana
+- Boss has 29 hit points
+Recharge provides 101 mana; its timer is now 0.
+Poison deals 3 damage; its timer is now 5.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 5 --
+- Wizard has 14 hit points, 0 armor, 377 mana; spent 628 mana
+- Boss has 26 hit points
+Poison deals 3 damage; its timer is now 4.
+Wizard casts Shield.
+
+-- Boss turn, round 5 --
+- Wizard has 14 hit points, 0 armor, 264 mana; spent 741 mana
+- Boss has 23 hit points
+Poison deals 3 damage; its timer is now 3.
+Shield increases armor by 7; its timer is now 5.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 6 --
+- Wizard has 12 hit points, 7 armor, 264 mana; spent 741 mana
+- Boss has 20 hit points
+Poison deals 3 damage; its timer is now 2.
+Shield timer is now 4.
+Wizard casts Magic Missile.
+Magic Missile deals 4 damage.
+
+-- Boss turn, round 6 --
+- Wizard has 12 hit points, 7 armor, 211 mana; spent 794 mana
+- Boss has 13 hit points
+Poison deals 3 damage; its timer is now 1.
+Shield timer is now 3.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 7 --
+- Wizard has 10 hit points, 7 armor, 211 mana; spent 794 mana
+- Boss has 10 hit points
+Poison deals 3 damage; its timer is now 0.
+Shield timer is now 2.
+Wizard casts Magic Missile.
+Magic Missile deals 4 damage.
+
+-- Boss turn, round 7 --
+- Wizard has 10 hit points, 7 armor, 158 mana; spent 847 mana
+- Boss has 3 hit points
+Shield timer is now 1.
+Boss attacks for 9 damage.
+
+-- Wizard turn, round 8 --
+- Wizard has 8 hit points, 7 armor, 158 mana; spent 847 mana
+- Boss has 3 hit points
+Shield timer is now 0.
+Shield wears off, decreasing armor by 7.
+Wizard casts Magic Missile.
+Magic Missile deals 4 damage.
+Boss dies.
+
+-- Game Over --
+Wizard won, mana spent: 900.
+- Wizard has 8 hit points, 0 armor, 105 mana; spent 900 mana
+- Boss has -1 hit points
+
+True 900 900
