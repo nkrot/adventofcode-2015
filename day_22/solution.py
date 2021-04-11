@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
 # # #
-#
 # TODO
 # 1) how to find combination of spells with minimal mana_paid value?
-#    For the time being, the solution to p1 was found out manaully :)
+#    For the time being, the solution to p1 was found out manually :)
+#    Alternatively:
+#    Try finding the solution by doing BFS/DFS, where each vertex is
+#    a spell. Prune (do not explore) branches that are worse than the best
+#    solution found so far (that is, we need to find at least one solution
+#    first).
+# 2) So many lines, fuck :(
+# 3) How to formulate the problem in terms of Dijkstra shortest path algorithm?
 
 import re
 import os
@@ -33,8 +39,8 @@ class Spell(object):
 
     def __init__(self, cost=0):
         self.cost = cost
-        self.timer = 0
-        self.owner = None  # player who cast the spell
+        self.timer = 0      # has instant effect if time eq 0
+        self.owner = None   # player who cast the spell
         self.target = None  # player against which the cast works
 
     def is_active(self):
@@ -158,6 +164,24 @@ class Recharge(Spell):
         self.owner.mana += self.mana
 
 
+class Decay(Spell):
+    '''
+    Decay costs nothing
+    It instantly does 1 damage and acts permamently.
+    '''
+
+    def __init__(self, target=None):
+        super().__init__(0)
+        self.damage = 1
+        self.timer = 0
+        self.target = target
+
+    def act(self):
+        print('Decay deals {} damage to {}.'.format(
+            self.damage, self.target.name))
+        self.target.receives_attack(self.damage)
+
+
 class BossLost(Exception):
     pass
 
@@ -167,6 +191,16 @@ class WizardLost(Exception):
 
 
 class Player(object):
+
+    @staticmethod
+    def Wizard():
+        '''Standard Wizard player'''
+        return Wizard(50, 500)
+
+    @staticmethod
+    def Boss():
+        '''Standard Boss player'''
+        return Boss(51, 9)
 
     def __init__(self, hp):
         self.hit_points = hp  # health
@@ -221,7 +255,7 @@ class Wizard(Player):
     def buy_spell(self, spell):
         '''If you cannot afford to cast any spell, you lose.'''
         if self.mana < spell.cost:
-            self.die("not enough mana")
+            self.die(f"not enough mana for {spell}")
         self.mana -= spell.cost
         self.mana_paid += spell.cost
 
@@ -279,17 +313,28 @@ class Scene(object):
                     self.effects.pop(idx)
 
 
+class SceneWithDecay(Scene):
+    '''
+    A Scene that subtracts 1 hit point (causes 1 damage) before every turn
+    '''
+    def __init__(self, target):
+        super().__init__()
+        self.target = target  # Player affected by Decay effect
+
+    def act(self):
+        self.effects.insert(0, Decay(self.target))
+        super().act()
+
+
 def report(msg, players):
     print(msg)
     for pl in players:
         print(f"- {pl}")
 
 
-def play(you, boss, spells, msg=None):
+def play(scene, you, boss, spells, msg=None):
     msg = msg or 'New Game'
     print(f"--- {msg} ---")
-
-    scene = Scene()
 
     you.opponent = boss
     boss.opponent = you
@@ -329,7 +374,7 @@ def demo_1():
     boss = Boss(13, 8)
     you = Wizard(10, 250)
     spells = [Poison(), MagicMissile()]
-    play(you, boss, spells, descr)
+    play(Scene(), you, boss, spells, descr)
 
 
 def demo_2():
@@ -337,18 +382,27 @@ def demo_2():
     boss = Boss(14, 8)
     you = Wizard(10, 250)
     spells = [Recharge(), Shield(), Drain(), Poison(), MagicMissile()]
-    play(you, boss, spells, descr)
+    play(Scene(), you, boss, spells, descr)
 
+
+def demo_3():
+    descr = "DEMO 3 (with Decay effect)"
+    boss = Boss(14, 8)
+    you = Wizard(1, 250)
+    spells = [Recharge()]
+    play(SceneWithDecay(you), you, boss, spells, descr)
 
 #demo_1()
 #demo_2()
+#demo_3()
+#exit(100)
 
 
 def solve_p1(lines: List[str]) -> int:
     """Solution to the 1st part of the challenge"""
 
-    you = Wizard(50, 500)
-    boss = Boss(51, 9)  # from input.txt
+    you = Player.Wizard()
+    boss = Player.Boss()
 
     # mana spent: 1242 (too high)
     spells = [Shield(), Recharge(), Poison(),
@@ -363,7 +417,7 @@ def solve_p1(lines: List[str]) -> int:
     spells = [Poison(), Recharge(), MagicMissile(), Poison(), Shield(),
               MagicMissile(), MagicMissile(), MagicMissile()]
 
-    winner = play(you, boss, spells)
+    winner = play(Scene(), you, boss, spells)
 
     if winner[0] == 0:
         return winner[1].mana_paid
@@ -373,8 +427,55 @@ def solve_p1(lines: List[str]) -> int:
 
 def solve_p2(lines: List[str]) -> int:
     """Solution to the 2nd part of the challenge"""
-    # TODO
-    return 0
+
+    you = Player.Wizard()
+    boss = Player.Boss()
+
+    # mana spent: 1784 (too high)
+    spells = [Shield(), Drain(), Recharge(),
+              Shield(), Poison(), Recharge(),
+              Shield(), Poison(), Recharge(),
+              Shield(), Poison(), MagicMissile()
+              ]
+
+    # mana spent: 1940
+    spells = [Shield(), MagicMissile(), Recharge(),
+              Shield(), Poison(), Recharge(),
+              Shield(), Poison(), Recharge(),
+              Shield(), Poison(), Recharge() ]
+
+    # mana spent: 1422 (too high)
+    spells = [Shield(), Recharge(), Poison(),
+              Shield(), Recharge(), Poison(),
+              Shield(), MagicMissile(), Poison(),
+              MagicMissile()]
+
+    # mana spent: 1355 (too high)
+    spells = [Shield(), Recharge(), Poison(),
+              Shield(), Recharge(), Poison(),
+              Shield(), MagicMissile(), MagicMissile(),
+              MagicMissile(), MagicMissile()
+              ]
+
+    # mana spent: 1256
+    spells = [Poison(), Recharge(), Shield(),
+              Poison(), Recharge(), Shield(),
+              Poison(), MagicMissile()]
+
+    # # mana spent:
+    # spells = [Poison(), Recharge(), Shield(),
+    #           Poison(), Recharge(), Shield(),
+    #           Poison(), MagicMissile(), MagicMissile()
+    #           ]
+
+    # TODO: not working yet
+
+    winner = play(SceneWithDecay(you), you, boss, spells)
+
+    if winner[0] == 0:
+        return winner[1].mana_paid
+
+    return -1
 
 
 def run_real():
