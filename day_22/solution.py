@@ -2,20 +2,16 @@
 
 # # #
 # TODO
-# 1) how to find combination of spells with minimal mana_paid value?
-#    For the time being, the solution to p1 was found out manually :)
-#    Alternatively:
-#    Try finding the solution by doing BFS/DFS, where each vertex is
-#    a spell. Prune (do not explore) branches that are worse than the best
-#    solution found so far (that is, we need to find at least one solution
-#    first).
-# 2) So many lines, fuck :(
-# 3) How to formulate the problem in terms of Dijkstra shortest path algorithm?
+# 1) So many lines, fuck :(
+# 2) How to formulate the problem in terms of Dijkstra shortest path algorithm?
+# 3) The solution uses exceptions to control the flow of execution.
+#    This should be changed to something less destructive.
+# 4) see other TODOs scattered across the file
 
 import re
 import os
 import sys
-from typing import List
+from typing import List, Tuple
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from aoc import utils
@@ -37,6 +33,28 @@ DEBUG = False
 
 class Spell(object):
 
+    verbose = False
+
+    items = {
+        'M': 'MagicMissile',
+        'D': 'Drain',
+        'S': 'Shield',
+        'P': 'Poison',
+        'R': 'Recharge',
+        #'D': 'Decay'
+    }
+
+    @classmethod
+    def make_spells(cls, spec: str) -> List['Spell']:
+        '''Given a specification <spec>, construct a list of spells that
+        correspond to the specification. For example:
+        >>> make_spells('MSD')
+        >>> [MagicMissile(), Shield(), Drain()]
+        '''
+        spells = [getattr(sys.modules[__name__], cls.items[n])()
+                  for n in spec.upper()]
+        return spells
+
     def __init__(self, cost=0):
         self.cost = cost
         self.timer = 0      # has instant effect if time eq 0
@@ -57,6 +75,10 @@ class Spell(object):
     def __eq__(self, other):
         return isinstance(other, type(self))
 
+    def log(self, msg):
+        if self.verbose:
+            print(msg)
+
 
 class MagicMissile(Spell):
     '''
@@ -72,7 +94,7 @@ class MagicMissile(Spell):
         return 'Magic Missile'
 
     def act(self):
-        print('Magic Missile deals {} damage.'.format(self.damage))
+        self.log('Magic Missile deals {} damage.'.format(self.damage))
         self.target.receives_attack(self.damage)
 
 
@@ -87,7 +109,7 @@ class Drain(Spell):
         self.hit_points = 2
 
     def act(self):
-        print('Drain deals {} damage and heals {} hit points.'.format(
+        self.log('Drain deals {} damage and heals {} hit points.'.format(
             self.damage, self.hit_points))
         self.owner.hit_points += self.hit_points
         self.target.receives_attack(self.damage)
@@ -110,15 +132,16 @@ class Shield(Spell):
         assert self.is_active(), "Ops. should not be called."
         self.timer -= 1
         if self.started:
-            print("Shield timer is now {}.".format(self.timer))
+            self.log("Shield timer is now {}.".format(self.timer))
         else:
-            print("Shield increases armor by {}; its timer is now {}.".format(
+            self.log(
+                "Shield increases armor by {}; its timer is now {}.".format(
                 self.armor, self.timer))
             self.owner.armor += self.armor
             self.started = True
         if self.timer == 0:
-            print("Shield wears off, decreasing armor by {}.".format(
-                self.armor))
+            self.log("Shield wears off, decreasing armor by {}.".format(
+                     self.armor))
             self.owner.armor -= self.armor
 
 
@@ -140,8 +163,8 @@ class Poison(Spell):
     def act(self):
         assert self.is_active(), "Ops. should not be called."
         self.timer -= 1
-        print('Poison deals {} damage; its timer is now {}.'.format(
-            self.damage, self.timer))
+        self.log('Poison deals {} damage; its timer is now {}.'.format(
+                 self.damage, self.timer))
         self.target.receives_attack(self.damage)
 
 
@@ -159,15 +182,15 @@ class Recharge(Spell):
     def act(self):
         assert self.is_active(), "Ops. should not be called."
         self.timer -= 1
-        print("Recharge provides {} mana; its timer is now {}.".format(
-            self.mana, self.timer))
+        self.log("Recharge provides {} mana; its timer is now {}.".format(
+                 self.mana, self.timer))
         self.owner.mana += self.mana
 
 
 class Decay(Spell):
     '''
     Decay costs nothing
-    It instantly does 1 damage and acts permamently.
+    It instantly does 1 damage and acts permanently.
     '''
 
     def __init__(self, target=None):
@@ -177,30 +200,49 @@ class Decay(Spell):
         self.target = target
 
     def act(self):
-        print('Decay deals {} damage to {}.'.format(
-            self.damage, self.target.name))
+        self.log('Decay deals {} damage to {}.'.format(
+                 self.damage, self.target.name))
         self.target.receives_attack(self.damage)
 
+# GameOverError
+# - BossLostError
+# - WizardLostError
+#   - WizardHasNoSpellsError
+# - InvalidSpellError
 
-class BossLost(Exception):
+class GameOverError(Exception):
     pass
 
 
-class WizardLost(Exception):
+class BossLostError(GameOverError):
+    pass
+
+
+class WizardLostError(GameOverError):
+    pass
+
+
+class WizardHasNoSpellsError(WizardLostError):
+    pass
+
+
+class InvalidSpellError(GameOverError):
     pass
 
 
 class Player(object):
 
     @staticmethod
-    def Wizard():
+    def Wizard(spells=None):
         '''Standard Wizard player'''
-        return Wizard(50, 500)
+        return Wizard(50, 500, spells)
 
     @staticmethod
     def Boss():
         '''Standard Boss player'''
         return Boss(51, 9)
+
+    verbose = False
 
     def __init__(self, hp):
         self.hit_points = hp  # health
@@ -214,16 +256,23 @@ class Player(object):
         if self.hit_points < 1:
             self.die()
 
+    def log(self, msg):
+        if self.verbose:
+            print(msg)
+
 
 class Wizard(Player):
     '''Fights by casting spells'''
 
-    def __init__(self, hp, mana=500):
+    def __init__(self, hp, mana=500, spells=None):
         super().__init__(hp)
         self.mana = mana
         self.mana_paid = 0
+        self.mana_max_limit = None
         self.name = "Wizard"
         self._spells = []
+        if spells:
+            self.spells = spells
 
     def __str__(self):
         return "{} has {} hit points, {} armor, {} mana; spent {} mana".format(
@@ -237,20 +286,21 @@ class Wizard(Player):
     def spells(self, _spells):
         for spell in _spells:
             spell.owner = self
-            spell.target = self.opponent
+            #spell.target = self.opponent
             self._spells.append(spell)
 
     def act(self):
         if not self.spells:
-            self.die("no spells available")
+            raise WizardHasNoSpellsError("No more spells available.")
         spell = self.spells.pop(0)
         self.buy_spell(spell)
-        print(f"{self.name} casts {spell}.")
+        spell.target = self.opponent
+        self.log(f"{self.name} casts {spell}.")
         self.scene.add_spell(spell)
 
     def die(self, reason='was killed'):
-        print(f"Wizard dies: {reason}.")
-        raise WizardLost(f"Player {self.name} {reason}")
+        self.log(f"Wizard dies: {reason}.")
+        raise WizardLostError(f"Player {self.name} {reason}")
 
     def buy_spell(self, spell):
         '''If you cannot afford to cast any spell, you lose.'''
@@ -258,6 +308,9 @@ class Wizard(Player):
             self.die(f"not enough mana for {spell}")
         self.mana -= spell.cost
         self.mana_paid += spell.cost
+        if self.mana_max_limit and self.mana_paid > self.mana_max_limit:
+            self.die("Too much mana spent: {} > {}".format(
+                self.mana_paid, self.mana_max_limit))
 
 
 class Boss(Player):
@@ -271,12 +324,12 @@ class Boss(Player):
         return f"{self.name} has {self.hit_points} hit points"
 
     def act(self):
-        print(f"Boss attacks for {self.damage} damage.")
+        self.log(f"Boss attacks for {self.damage} damage.")
         self.opponent.receives_attack(self.damage)
 
     def die(self):
-        print("Boss dies.")
-        raise BossLost(f"Player {self.name} was killed.")
+        self.log("Boss dies.")
+        raise BossLostError(f"Player {self.name} was killed.")
 
 
 class Scene(object):
@@ -287,18 +340,18 @@ class Scene(object):
 
     def add_spell(self, spell):
         '''Run given spell immediately or start an effect from it.'''
-        # + [DONE] test that this may kill the opponent immediately
         if spell in self.effects:
-            raise ValueError(f"Spell of type {type(spell)} is already active")
+            raise InvalidSpellError(
+                f"Spell of type {type(spell)} is already active")
         if spell.timer == 0:
             # Spells with instant action
             spell.act()
         else:
-            # Spells that create effects.
-            # Effects become active in the next turn.
+            # Spells that create durable effects.
+            # Effects become active in the next turn only.
             self.effects.append(spell)
 
-    def act(self):
+    def act(self, turn=0):
         '''Run all effects available. Delete expired effects.
         This method should be triggered at the beginning of each turn.
         '''
@@ -308,174 +361,273 @@ class Scene(object):
                 effect.act()
                 if not effect.is_active():
                     expired.append(idx)
-            if expired:
-                for idx in reversed(expired):
-                    self.effects.pop(idx)
+            for idx in reversed(expired):
+                self.effects.pop(idx)
 
 
 class SceneWithDecay(Scene):
     '''
-    A Scene that subtracts 1 hit point (causes 1 damage) before every turn
+    A Scene that subtracts 1 hit point (causes 1 damage) to
+    given target player before that players turn.
     '''
-    def __init__(self, target):
+    def __init__(self, target: Tuple[int, Player]):
+        '''Turns are numbered starting from 1'''
         super().__init__()
-        self.target = target  # Player affected by Decay effect
+        self.turn_id, self.target = target  # Player affected by Decay effect
 
-    def act(self):
-        self.effects.insert(0, Decay(self.target))
+    def act(self, turn=0):
+        '''If the turn=1, then it is Wizard (<self.target>) playing and he
+        receives one Decay effect.
+        '''
+        if turn == 1:
+            self.effects.insert(0, Decay(self.target))
         super().act()
 
 
-def report(msg, players):
-    print(msg)
-    for pl in players:
-        print(f"- {pl}")
+class Battle(object):
+    '''When a battle is over, this is indicated by throwing an exception'''
+
+    verbose = False
+
+    def __init__(self, scene, wizard, boss, descr=None):
+        self.scene = scene
+        self.players = [wizard, boss]
+        self.description = descr or 'New Game'
+        self.winner = None
+
+        for i, j in [(0, 1), (1, 0)]:
+            self.players[i].scene = self.scene
+            self.players[i].opponent = self.players[j]
+
+    def run(self):
+        self.report(f"--- {self.description} ---")
+        wizard, boss = self.players
+        try:
+            c_rounds = 0
+            while True:
+                c_rounds += 1
+
+                self.report(f"\n-- Wizard turn, round {c_rounds} --")
+                self.scene.act(1)
+                wizard.act()
+
+                self.report(f"\n-- Boss turn, round {c_rounds} --")
+                self.scene.act(2)
+                boss.act()
+
+        except BossLostError:
+            self.winner = (0, wizard)
+            msg = f"Wizard won, mana spent: {wizard.mana_paid}."
+            self.report(f"\n-- Game Over --\n{msg}")
+            self.report()
+            raise
+
+        except WizardLostError:
+            self.winner = (1, boss)
+            msg = "Boss won. Try again."
+            self.report(f"\n-- Game Over --\n{msg}")
+            self.report()
+            raise
+
+    def report(self, msg=''):
+        if self.verbose:
+            print(msg)
+            if msg:
+                for pl in self.players:
+                    print(f"- {pl}")
 
 
-def play(scene, you, boss, spells, msg=None):
-    msg = msg or 'New Game'
-    print(f"--- {msg} ---")
+class BFSearchSolver(object):
+    '''
+    Algorithm
+    The solver generates combinations of spells and runs the game (Battle)
+    for each combination, memorizing games in which Wizard wins.
 
-    you.opponent = boss
-    boss.opponent = you
+    Each game is always run from the very beginning.
+    TODO: this could be improved by memoizing Battles for each combination
+    of spells. When a new combination is spells is tried, the closest to it
+    Battle can be retrieved from the memory and continued. For this, need to
+    implement a copying mechanism for a Battle and its components (scene,
+    players, spells).
 
-    you.scene = scene
-    you.spells = spells
+    Combinations of spells are in generate a la BFS in a graph.
+    If "a", "b" and "c" are individual spells, then the combinations are
+    generated as follows:
+    "a", "b", "c",
+      "aa", "ab", "ac",
+      "ba", "bb", "bc",
+      "ca", "cb", "cc",
+        "aaa", "aab", "aac",
+        "aba", "abb", "abc",
+        "aca", "acb", "acc",
+        "baa", "bab", "bac",
+        "bba", "bbb", "bbc",
+        "bca", "bcb", "bcc",
+        "cca", ...
 
-    try:
-        c_rounds = 0
-        while True:
-            c_rounds += 1
+    Optimizations
+    -------------
+    1) pruning: branches below the point where Wizard lost are not explored.
+       Obviously, in those branches Wizard will loose as well.
+    2) pruning: once a solution if found, the value of Mana spent is used to
+       avoid exploring games (and games from their subbranches) as soon as such
+       games show a higher value of Mana spent. If a new solution is better
+       than the current one, the new one is used in further exploration.
+    '''
 
-            report(f"\n-- Wizard turn, round {c_rounds} --", [you, boss])
-            scene.act()
-            you.act()
+    verbose = False
 
-            report(f"\n-- Boss turn, round {c_rounds} --", [you, boss])
-            scene.act()
-            boss.act()
+    def __init__(self):
+        self.atoms = list(Spell.items.keys())
+        self.combinations = list(self.atoms)
 
-    except BossLost:
-        msg = f"Wizard won, mana spent: {you.mana_paid}."
-        winner = (0, you)
+        # TODO: instead of functions that create objects, we can receive
+        # and object and create copies of it when necessary
+        self.create_boss_func = lambda: Player.Boss()
+        self.create_wizard_func = lambda spells: Player.Wizard(spells)
+        self.create_scene_func = lambda arg: Scene()  # ugly: arg not used
 
-    except WizardLost:
-        msg = "Boss won. Try again."
-        winner = (1, boss)
+        # TODO:
+        # Store found solution(s) and provide access to it/them
+        # A solution is in this case the while Battle with players and spells
 
-    report(f"\n-- Game Over --\n{msg}", [you, boss])
-    print()
+    def __iter__(self):
+        return self
 
-    return winner
+    def __next__(self):
+        if self.combinations:
+            curr = self.combinations.pop(0)
+            self.combinations.extend([curr + atom for atom in self.atoms])
+            return curr
+        raise StopIteration
+
+    def stop(self, comb: str):
+        while self.combinations and self.combinations[-1].startswith(comb):
+           deleted = self.combinations.pop()
+
+    def run(self):
+
+        solution = None
+        cnt = 0
+
+        for spec in self:
+            cnt += 1
+
+            boss = self.create_boss_func()
+            wizard = self.create_wizard_func(Spell.make_spells(spec))
+            if solution:
+                wizard.mana_max_limit = solution[1].mana_paid
+
+            # TODO: ugly:
+            # in part 1, the argument will be ignored
+            scene = self.create_scene_func((1, wizard))
+
+            battle = Battle(scene, wizard, boss, f"New Game (#{cnt}): {spec}")
+
+            try:
+                battle.run()
+
+            except WizardHasNoSpellsError:
+                # Normal situation. keep searching
+                self.log("No spells. Continue searching")
+                pass
+
+            except (InvalidSpellError, WizardLostError):
+                # Stop exploring this branch of the graph
+                self.stop(spec)
+
+            except BossLostError:
+                solution = (spec, wizard)
+                self.log("Solution {} {}".format(solution, wizard.mana_paid))
+                self.stop(spec)
+
+        return solution[1].mana_paid if solution else -1
+
+    def log(self, msg):
+        if self.verbose:
+            print(msg)
+
+
+def set_verbosity(val):
+    val = bool(val)
+    Spell.verbose = val
+    Player.verbose = val
+    Battle.verbose = val
+    BFSearchSolver.verbose = val
 
 
 def demo_1():
     descr = "DEMO 1"
-    boss = Boss(13, 8)
-    you = Wizard(10, 250)
     spells = [Poison(), MagicMissile()]
-    play(Scene(), you, boss, spells, descr)
+    boss = Boss(13, 8)
+    you = Wizard(10, 250, spells)
+    battle = Battle(Scene(), you, boss, descr)
+    try:
+        battle.run()
+    except GameOverError:
+        pass
 
 
 def demo_2():
     descr = "DEMO 2"
-    boss = Boss(14, 8)
-    you = Wizard(10, 250)
     spells = [Recharge(), Shield(), Drain(), Poison(), MagicMissile()]
-    play(Scene(), you, boss, spells, descr)
-
-
-def demo_3():
-    descr = "DEMO 3 (with Decay effect)"
     boss = Boss(14, 8)
-    you = Wizard(1, 250)
-    spells = [Recharge()]
-    play(SceneWithDecay(you), you, boss, spells, descr)
+    you = Wizard(10, 250, spells)
+    battle = Battle(Scene(), you, boss, descr)
+    try:
+        battle.run()
+    except GameOverError:
+        pass
 
+
+def demo_3_solve_p1():
+    descr = "Solution to part 1"
+    spells = [Poison(), Recharge(), MagicMissile(), Poison(), Shield(),
+              MagicMissile(), MagicMissile(), MagicMissile()]
+    boss = Player.Boss()
+    you = Player.Wizard(spells)
+    battle = Battle(Scene(), you, boss, descr)
+    try:
+        battle.run()
+    except GameOverError:
+        pass
+
+
+def demo_4():
+    descr = "DEMO 4 (with Decay effect on Wizard)"
+    spells = [Recharge()]
+    boss = Boss(14, 8)
+    you = Wizard(1, 250, spells)
+    scene = SceneWithDecay((1, you))
+    battle = Battle(scene, you, boss, descr)
+    try:
+        battle.run()
+    except GameOverError:
+        pass
+
+
+# for demos, set verbosity to True
+#set_verbosity(True)
 #demo_1()
 #demo_2()
-#demo_3()
+#demo_3_solve_p1()
+#demo_4()
 #exit(100)
 
 
 def solve_p1(lines: List[str]) -> int:
     """Solution to the 1st part of the challenge"""
-
-    you = Player.Wizard()
-    boss = Player.Boss()
-
-    # mana spent: 1242 (too high)
-    spells = [Shield(), Recharge(), Poison(),
-              MagicMissile(), MagicMissile(), Shield(), Recharge(), Poison(),
-              MagicMissile(), MagicMissile()]
-
-    # mana spent: 1256
-    spells = [Poison(), Recharge(), Shield(), Poison(),
-              MagicMissile(), Recharge(), Poison(), Shield()]
-
-    # mana spent: 900
-    spells = [Poison(), Recharge(), MagicMissile(), Poison(), Shield(),
-              MagicMissile(), MagicMissile(), MagicMissile()]
-
-    winner = play(Scene(), you, boss, spells)
-
-    if winner[0] == 0:
-        return winner[1].mana_paid
-
-    return -1
+    solver = BFSearchSolver()
+    res = solver.run()
+    return res
 
 
 def solve_p2(lines: List[str]) -> int:
     """Solution to the 2nd part of the challenge"""
-
-    you = Player.Wizard()
-    boss = Player.Boss()
-
-    # mana spent: 1784 (too high)
-    spells = [Shield(), Drain(), Recharge(),
-              Shield(), Poison(), Recharge(),
-              Shield(), Poison(), Recharge(),
-              Shield(), Poison(), MagicMissile()
-              ]
-
-    # mana spent: 1940
-    spells = [Shield(), MagicMissile(), Recharge(),
-              Shield(), Poison(), Recharge(),
-              Shield(), Poison(), Recharge(),
-              Shield(), Poison(), Recharge() ]
-
-    # mana spent: 1422 (too high)
-    spells = [Shield(), Recharge(), Poison(),
-              Shield(), Recharge(), Poison(),
-              Shield(), MagicMissile(), Poison(),
-              MagicMissile()]
-
-    # mana spent: 1355 (too high)
-    spells = [Shield(), Recharge(), Poison(),
-              Shield(), Recharge(), Poison(),
-              Shield(), MagicMissile(), MagicMissile(),
-              MagicMissile(), MagicMissile()
-              ]
-
-    # mana spent: 1256
-    spells = [Poison(), Recharge(), Shield(),
-              Poison(), Recharge(), Shield(),
-              Poison(), MagicMissile()]
-
-    # # mana spent:
-    # spells = [Poison(), Recharge(), Shield(),
-    #           Poison(), Recharge(), Shield(),
-    #           Poison(), MagicMissile(), MagicMissile()
-    #           ]
-
-    # TODO: not working yet
-
-    winner = play(SceneWithDecay(you), you, boss, spells)
-
-    if winner[0] == 0:
-        return winner[1].mana_paid
-
-    return -1
+    solver = BFSearchSolver()
+    solver.create_scene_func = lambda arg: SceneWithDecay(arg)
+    res = solver.run()
+    return res
 
 
 def run_real():
@@ -487,10 +639,10 @@ def run_real():
     res1 = solve_p1(lines)
     print(exp1 == res1, exp1, res1)
 
-    # print(f"--- Day {day} p.2 ---")
-    # exp2 = -1
-    # res2 = solve_p2(lines)
-    # print(exp2 == res2, exp2, res2)
+    print(f"--- Day {day} p.2 ---")
+    exp2 = 1216
+    res2 = solve_p2(lines)
+    print(exp2 == res2, exp2, res2)
 
 
 if __name__ == '__main__':
