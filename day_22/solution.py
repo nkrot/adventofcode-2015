@@ -379,7 +379,7 @@ class SceneWithDecay(Scene):
         '''If the turn=1, then it is Wizard (<self.target>) playing and he
         receives one Decay effect.
         '''
-        if turn == 1:
+        if turn == self.turn_id:
             self.effects.insert(0, Decay(self.target))
         super().act()
 
