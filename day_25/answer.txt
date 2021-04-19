@@ -1,0 +1,8 @@
+--- Tests ---
+T1.0: True 16929656 16929656
+T1.1: True 17552253 17552253
+T1.2: True 6796745 6796745
+--- Day 25 p.1 ---
+True 2650453 2650453
+--- Day 25 p.2 ---
+No task is provided, the star is granted.
