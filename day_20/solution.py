@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 
 # # #
-#
-#
+# TODO
+# 1) what is Robbin's theorem?
+# 2) find all divisors based on prime numbers
+#     http://www.cleverstudents.ru/divisibility/all_divisors_of_number.html
+# 3) measure runtime of some solutions
 
-import re
-import os
-import sys
+
 import math
-from typing import List
-
-#sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-#from aoc import utils
 
 
 DEBUG = False
