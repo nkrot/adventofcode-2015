@@ -1,0 +1,14 @@
+--- Tests ---
+T1.0: True 6 6
+T1.1: True 6 6
+T1.2: True 8 8
+T1.3: True 8 8
+T1.4: True 10 10
+T1.5: True 12 12
+T1.6: True 36 36
+T1.7: True 48 48
+T1.8: True 60 60
+--- Day 20 p.1 ---
+True 776160 776160
+--- Day 20 p.2 ---
+True 786240 786240
